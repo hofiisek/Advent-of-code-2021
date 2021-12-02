@@ -14,7 +14,7 @@ fun part1(input: File) = input.readLines()
         else
             next to count
     }.also {
-    println(it.second)
+        println(it.second)
     }
 
 fun part2(input: File) = input.readLines()
