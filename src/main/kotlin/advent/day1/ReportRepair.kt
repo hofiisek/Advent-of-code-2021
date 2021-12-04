@@ -1,5 +1,6 @@
 package main.kotlin.advent.day1
 
+import advent.loadInput
 import java.io.File
 
 /**
@@ -31,7 +32,7 @@ fun part2(input: File) = input.readLines()
     }
 
 fun main() {
-    with (File(object {}.javaClass.getResource("input.txt").toURI())) {
+    with(loadInput(day = 1)) {
         part1(this)
         part2(this)
     }
