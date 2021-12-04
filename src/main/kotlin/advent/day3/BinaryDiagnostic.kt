@@ -1,4 +1,4 @@
-package main.kotlin.advent.day3
+package advent.day3
 
 import advent.loadInput
 import java.io.File
