@@ -10,13 +10,13 @@ import java.io.File
 @JvmInline
 value class Fish(val age: Int)
 
-fun part1(input: File) = loadFish(input).let(::makeThoseFishHaveRecursiveSex).count()
+fun part1(input: File) = loadFish(input).let(::makeThoseFishHaveRecursiveSex)
 
 /**
  * Just accumulate the fish in the list and count them
  */
-fun makeThoseFishHaveRecursiveSex(fish: List<Fish> = emptyList(), day: Int = 0): List<Fish> = when (day) {
-    80 -> fish
+fun makeThoseFishHaveRecursiveSex(fish: List<Fish> = emptyList(), day: Int = 0): Int = when (day) {
+    80 -> fish.count()
     else -> makeThoseFishHaveRecursiveSex(
         fish = fish.flatMap {
             if (it.age == 0)
@@ -32,7 +32,7 @@ fun part2(input: File) = loadFish(input)
     .groupingBy { it.age }
     .eachCount()
     .mapValues { (_, count) -> count.toLong() } // integer would overflow
-    .let { (0..8).associateWith { 0L } + it }
+    .let { (0..8).associateWith { 0L } + it } // make sure the map contains all ages
     .let(::makeThoseFishHaveEffectiveRecursiveSex)
 
 /**
