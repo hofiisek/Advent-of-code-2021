@@ -14,7 +14,7 @@ fun part1(input: File) = input.readLines()
     ?.map(String::toInt)
     ?.let { positions ->
         positions.minOf { pos ->
-            positions.sumOf { abs(it - pos) }
+            positions.sumOf { otherPos -> abs(otherPos - pos) }
         }
     }
     ?: throw IllegalArgumentException("Invalid input")
