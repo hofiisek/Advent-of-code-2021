@@ -10,7 +10,7 @@ import kotlin.collections.ArrayDeque
 
 data class Position(val row: Int, val col: Int)
 
-data class Point(val height: Int, val position: Position, var basin: Basin? = null) {
+data class Point(val height: Int, val position: Position) {
     override fun toString() = "Point(height=$height, position=$position)"
 }
 
@@ -31,9 +31,10 @@ class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements 
             this[position.row][position.col]
 }
 
-fun <T> Matrix<T>.adjacents(position: Position): List<T> = listOf(-1, 1)
+fun <T> Matrix<T>.adjacents(position: Position): Set<T> = listOf(-1, 1)
     .flatMap { listOf(Position(position.row + it, position.col), Position(position.row, position.col + it)) }
     .mapNotNull(this::get)
+    .toSet()
 
 
 fun part1(input: File) = loadHeightmap(input)
@@ -44,10 +45,12 @@ fun part1(input: File) = loadHeightmap(input)
     }
 
 
-data class Basin(val points: List<Point>) {
+data class Basin(val points: Set<Point>) {
 
     val size: Int
         get() = points.size
+
+    fun contains(point: Point) = points.contains(point)
 
     override fun toString() = buildString {
         append("Basin(\n\t")
@@ -58,10 +61,8 @@ data class Basin(val points: List<Point>) {
     }
 }
 
-data class GraphNode(val point: Point, val edgesTo: List<Point>) {
+data class GraphNode(val point: Point, val edgesTo: Set<Point>) {
     val height: Int by point::height
-    val position: Position by point::position
-    val basin: Basin? by point::basin
 }
 
 fun part2(input: File): Int = loadHeightmap(input)
@@ -78,24 +79,21 @@ fun Matrix<Point>.toGraph(): Matrix<GraphNode> =
     map { rowPoints -> rowPoints.map { point -> GraphNode(point, adjacents(point.position)) } }.let(::Matrix)
 
 
-fun Matrix<GraphNode>.detectBasins() = flatten().fold(emptyList<Basin>()) { basins, graphNode ->
+fun Matrix<GraphNode>.detectBasins() = flatten().fold(emptySet<Basin>()) { basins, currentNode ->
     when {
-        graphNode.height == 9 -> basins // skip the highest points
-        graphNode.basin != null -> basins // point already belongs to some basin
-        else -> {
-            val basin: Basin = runBfs(queue = ArrayDeque(listOf(graphNode)))
+        currentNode.height == 9 -> basins // skip the highest points
+        basins.any { it.contains(currentNode.point) } -> basins // point already belongs to some basin
+        else ->
+            // run bfs starting in the current node and add it to the set of basins
+            basins + runBfs(queue = ArrayDeque(listOf(currentNode)))
                 .map { it.point }
+                .toSet()
                 .let(::Basin)
-                .also { basin ->
-                    basin.points.forEach { it.basin = basin }
-                }
-            basins + basin
-        }
     }
 }
 
 fun Matrix<GraphNode>.runBfs(
-    queue: ArrayDeque<GraphNode>, // current element in initially in queue
+    queue: ArrayDeque<GraphNode>,
     acc: List<GraphNode> = emptyList()
 ): List<GraphNode> =
     if (queue.isEmpty()) {
@@ -105,7 +103,7 @@ fun Matrix<GraphNode>.runBfs(
         val suitableAdjacents = curr.edgesTo
             .filter { it.height != 9 } // the highest points are ignored
             .filter { edgeTo -> acc.none { it.point == edgeTo }} // filter out visited nodes
-            .filter { edgeTo -> queue.none { it.point == edgeTo }} // filter out processed nodes
+            .filter { edgeTo -> queue.none { it.point == edgeTo }} // filter out open nodes
             .map {
                 this[it.position]
                     ?: throw IllegalArgumentException("Position ${it.position} out of bounds")
