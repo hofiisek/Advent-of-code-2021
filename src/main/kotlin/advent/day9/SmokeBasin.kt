@@ -9,10 +9,7 @@ import kotlin.collections.ArrayDeque
  */
 
 data class Position(val row: Int, val col: Int)
-
-data class Point(val height: Int, val position: Position) {
-    override fun toString() = "Point(height=$height, position=$position)"
-}
+data class Point(val height: Int, val position: Position)
 
 class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements {
 
