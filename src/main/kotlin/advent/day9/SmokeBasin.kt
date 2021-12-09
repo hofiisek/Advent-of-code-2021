@@ -29,6 +29,9 @@ class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements 
             null
         else
             this[position.row][position.col]
+
+    fun getOrThrow(position: Position) = get(position)
+        ?: throw IllegalArgumentException("Position $position out of bounds")
 }
 
 fun <T> Matrix<T>.adjacents(position: Position): Set<T> = listOf(-1, 1)
@@ -82,18 +85,19 @@ fun part2(input: File): Int = loadHeightmap(input)
     .map { it.size }
     .reduce(Int::times)
 
-fun Matrix<Point>.toGraph(): Matrix<GraphNode> =
-    map { rowPoints -> rowPoints.map { point -> GraphNode(point, adjacents(point.position)) } }.let(::Matrix)
+fun Matrix<Point>.toGraph(): Matrix<GraphNode> = map { rowPoints ->
+    rowPoints.map { point -> GraphNode(point, adjacents(point.position)) }
+}.let(::Matrix)
 
 
 fun Matrix<GraphNode>.detectBasins() = flatten().fold(emptySet<Basin>()) { basins, currentNode ->
     when {
         currentNode.height == 9 -> basins // skip the highest points
-        basins.any { it.contains(currentNode.point) } -> basins // point already belongs to some basin
+        basins.any { it.contains(currentNode.point) } -> basins // skip points that already belong to some basin
         else ->
             // run bfs starting in the current node and add it to the set of basins
             basins + runBfs(queue = ArrayDeque(listOf(currentNode)))
-                .map { it.point }
+                .map(GraphNode::point)
                 .toSet()
                 .let(::Basin)
     }
@@ -111,10 +115,7 @@ fun Matrix<GraphNode>.runBfs(
             .filter { it.height != 9 } // the highest points are ignored
             .filter { edgeTo -> acc.none { it.point == edgeTo }} // filter out visited nodes
             .filter { edgeTo -> queue.none { it.point == edgeTo }} // filter out open nodes
-            .map {
-                this[it.position]
-                    ?: throw IllegalArgumentException("Position ${it.position} out of bounds")
-            }
+            .map { getOrThrow(it.position) }
 
         runBfs(ArrayDeque((queue + suitableAdjacents).toList()), acc + curr)
     }
