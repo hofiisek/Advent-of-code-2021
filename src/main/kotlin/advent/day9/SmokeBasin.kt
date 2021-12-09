@@ -37,6 +37,9 @@ fun <T> Matrix<T>.adjacents(position: Position): Set<T> = listOf(-1, 1)
     .toSet()
 
 
+/**
+ * Just calculate the risk level for all points that are lower than all of their adjacent point
+ */
 fun part1(input: File) = loadHeightmap(input)
     .let { heightmap ->
         heightmap.flatten()
@@ -65,6 +68,11 @@ data class GraphNode(val point: Point, val edgesTo: Set<Point>) {
     val height: Int by point::height
 }
 
+/**
+ * Represent the heightmap as a graph where each point is a node with edges to its adjacent
+ * points. Then find all basins by running BFS from each node, skipping the highest nodes (nodes with height == 9)
+ * and nodes that already belong to some basin.
+ */
 fun part2(input: File): Int = loadHeightmap(input)
     .let(Matrix<Point>::toGraph)
     .let(Matrix<GraphNode>::detectBasins)
