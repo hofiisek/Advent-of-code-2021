@@ -66,7 +66,6 @@ data class GraphNode(val point: Point, val edgesTo: Set<Point>) {
 }
 
 fun part2(input: File): Int = loadHeightmap(input)
-    .let(::Matrix)
     .let(Matrix<Point>::toGraph)
     .let(Matrix<GraphNode>::detectBasins)
     .sortedBy { it.points.size }
