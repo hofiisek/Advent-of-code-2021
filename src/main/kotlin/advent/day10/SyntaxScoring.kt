@@ -58,22 +58,8 @@ fun part1(input: File) = input.readLines()
     .sumOf(Char::syntaxErrorScore)
 
 fun part2(input: File) = input.readLines()
-    .map { chars ->
-        fun recursive(brackets: List<Char>, stack: List<Char> = emptyList()): List<Char> =
-            brackets
-                .firstOrNull()
-                ?.let { bracket ->
-                    when {
-                        bracket.isOpeningBracket() -> recursive(brackets.drop(1), stack + brackets.first())
-                        bracket closes stack.last() -> recursive(brackets.drop(1), stack.dropLast(1))
-                        bracket doesNotClose stack.last() -> emptyList()
-                        else -> throw IllegalArgumentException("Invalid char '$bracket' in input line $chars")
-                    }
-                } ?: stack
-
-        recursive(brackets = chars.toCharArray().toList())
-    }
-    .filter { it.isNotEmpty() }
+    .map { chars -> findCharsToComplete(chars.toList()) }
+    .filter(List<Char>::isNotEmpty)
     .map { unclosedBrackets ->
         unclosedBrackets
             .reversed()
@@ -82,6 +68,18 @@ fun part2(input: File) = input.readLines()
     }
     .sorted()
     .let { it[it.size / 2] }
+
+fun findCharsToComplete(brackets: List<Char>, stack: List<Char> = emptyList()): List<Char> =
+    brackets
+        .firstOrNull()
+        ?.let { bracket ->
+            when {
+                bracket.isOpeningBracket() -> findCharsToComplete(brackets.drop(1), stack + brackets.first())
+                bracket closes stack.last() -> findCharsToComplete(brackets.drop(1), stack.dropLast(1))
+                bracket doesNotClose stack.last() -> emptyList()
+                else -> throw IllegalArgumentException("Illegal bracket: $bracket")
+            }
+        } ?: stack
 
 
 fun main() {
