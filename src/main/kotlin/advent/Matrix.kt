@@ -1,6 +1,7 @@
 package advent
 
 data class Position(val row: Int, val col: Int)
+fun Position.plus(other: Pair<Int, Int>) = Position(row + other.first, col + other.second)
 
 class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements {
 
@@ -22,7 +23,23 @@ class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements 
         ?: throw IllegalArgumentException("Position $position out of bounds")
 }
 
-fun <T> Matrix<T>.adjacents(position: Position): Set<T> = listOf(-1, 1)
-    .flatMap { listOf(Position(position.row + it, position.col), Position(position.row, position.col + it)) }
+fun <T> Matrix<T>.adjacents(position: Position): Set<T> = listOf(0 to 1, 0 to -1, 1 to 0, -1 to 0)
+    .map(position::plus)
+    .mapNotNull(this::get)
+    .toSet()
+
+
+fun <T> Matrix<T>.adjacentsWithDiagonals(position: Position): Set<T> =
+    listOf(
+        0 to 1,
+        0 to -1,
+        1 to 0,
+        -1 to 0,
+        1 to 1,
+        1 to -1,
+        -1 to -1,
+        -1 to 1
+    )
+    .map(position::plus)
     .mapNotNull(this::get)
     .toSet()

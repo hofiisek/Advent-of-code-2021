@@ -1,9 +1,6 @@
 package advent.day9
 
-import advent.Matrix
-import advent.Position
-import advent.adjacents
-import advent.loadInput
+import advent.*
 import java.io.File
 
 data class Point(val height: Int, val position: Position)
