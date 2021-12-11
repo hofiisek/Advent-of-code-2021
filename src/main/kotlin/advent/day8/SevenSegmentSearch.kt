@@ -148,7 +148,7 @@ fun part2(input: File) =
                         else -> throw IllegalArgumentException("Invalid length of signals: $signals")
                     }
                 }
-                .map { (idx, chars) -> chars.first() to idx }
+                .map { (segment, chars) -> chars.first() to segment }
                 .toMap()
 
             output
