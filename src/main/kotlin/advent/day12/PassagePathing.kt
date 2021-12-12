@@ -12,9 +12,14 @@ typealias Path = List<String>
 typealias Graph = Map<String, Set<String>>
 fun Graph.getEdges(node: String): Set<String> = get(node)?.toSet() ?: emptySet()
 
-data class Node(val id: String, val path: Path = listOf(id))
-fun Node.isEndNode() = id == "end"
-fun Node.isSmallCave() = id.all(Char::isLowerCase)
+sealed class Node {
+    abstract val id: String
+    abstract val path: Path
+}
+open class SmallCave(override val id: String, override val path: Path): Node()
+data class BigCave(override val id: String, override val path: Path): Node()
+data class StartCave(override val id: String, override val path: Path = listOf(id)): SmallCave(id, path)
+data class EndCave(override val id: String, override val path: Path): SmallCave(id, path)
 
 operator fun <K> Map<K, Set<K>>.plus(other: Map<K, Set<K>>) =
     this + other.map { (k, v) -> k to (getOrDefault(k, emptySet()) + v) }
@@ -24,7 +29,7 @@ fun <E> queueOf(elements: List<E>): ArrayDeque<E> = ArrayDeque(elements)
 
 data class IntermediateState(
     val graph: Graph,
-    val queue: ArrayDeque<Node> = queueOf(Node("start")),
+    val queue: ArrayDeque<Node> = queueOf(StartCave("start")),
     val completePaths: Set<Path> = emptySet()
 )
 fun Graph.toIntermediateState() = IntermediateState(graph = this)
@@ -52,12 +57,19 @@ fun findAllPaths(initialState: IntermediateState) =  DeepRecursiveBfs { state ->
             else -> {
                 val curr = queue.removeFirst()
 
-                if (curr.isEndNode()) {
+                if (curr is EndCave) {
                     callRecursive(state.copy(completePaths = completePaths + setOf(curr.path)))
                 } else {
                     val edges = graph.getEdges(curr.id)
-                        .map { edgeTo -> Node(edgeTo, curr.path + edgeTo) }
-                        .filterNot { edgeTo -> curr.path.contains(edgeTo.id) && edgeTo.isSmallCave() }
+                        .map { edgeTo ->
+                            when {
+                                edgeTo == "start" -> StartCave(edgeTo, curr.path + edgeTo)
+                                edgeTo == "end" -> EndCave(edgeTo, curr.path + edgeTo)
+                                edgeTo.all { it.isLowerCase() }-> SmallCave(edgeTo, curr.path + edgeTo)
+                                else -> BigCave(edgeTo, curr.path + edgeTo)
+                            }
+                        }
+                        .filterNot { edgeTo -> curr.path.contains(edgeTo.id) && edgeTo is SmallCave }
 
                     callRecursive(state.copy(queue = queueOf(queue + edges)))
                 }
