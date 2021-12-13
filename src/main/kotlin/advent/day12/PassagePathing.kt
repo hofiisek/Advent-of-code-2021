@@ -13,6 +13,9 @@ typealias Path = List<String>
 operator fun Set<Path>.plus(other: Path): Set<Path> = this + setOf(other)
 
 typealias Graph = Map<String, Set<String>>
+operator fun <K> Map<K, Set<K>>.plus(other: Map<K, Set<K>>) =
+    this + other.map { (k, v) -> k to (getOrDefault(k, emptySet()) + v) }
+
 fun Graph.getEdges(node: Node): Set<Node> = get(node.id)
     ?.map { edgeTo ->
         when {
@@ -33,10 +36,8 @@ open class SmallCave(override val id: String, override val path: Path): Node()
 data class BigCave(override val id: String, override val path: Path): Node()
 data class StartCave(override val id: String, override val path: Path = listOf(id)): SmallCave(id, path)
 data class EndCave(override val id: String, override val path: Path): SmallCave(id, path)
-fun String.isSmallCave() = all(Char::isLowerCase)
 
-operator fun <K> Map<K, Set<K>>.plus(other: Map<K, Set<K>>) =
-    this + other.map { (k, v) -> k to (getOrDefault(k, emptySet()) + v) }
+fun String.isSmallCave() = all(Char::isLowerCase)
 
 data class IntermediateState(
     val graph: Graph,
