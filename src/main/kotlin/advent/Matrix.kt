@@ -5,8 +5,8 @@ fun Position.plus(other: Pair<Int, Int>) = Position(row + other.first, col + oth
 
 class Matrix<T>(private val elements: List<List<T>>): List<List<T>> by elements {
 
-    private val rows: Int = elements.size
-    private val cols: Int = elements.firstOrNull()?.size ?: 0
+    val rows: Int = elements.size
+    val cols: Int = elements.firstOrNull()?.size ?: 0
 
     init {
         if (elements.isNotEmpty() && elements.any { row -> row.size != elements.first().size })
