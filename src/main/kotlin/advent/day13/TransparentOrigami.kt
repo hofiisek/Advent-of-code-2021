@@ -12,21 +12,11 @@ import java.io.File
 typealias Paper = Matrix<PaperPosition>
 
 fun Paper.foldUp(foldRowIdx: Int): Paper {
-    // number of rows the bottom part is smaller (paper wasn't folded exactly in half)
-    val rowsDiff = foldRowIdx - (rows - 1 - foldRowIdx)
-    val bottomHalfReversed = filterIndexed { rowIdx, _ -> rowIdx > foldRowIdx }
-        .reversed()
-        .mapIndexed { rowIdx, row ->
-            row.map { it.copy(Position(rowIdx + rowsDiff, it.position.col)) }
-        }
-        .let(::Paper)
-
     return (0 until foldRowIdx).map { row ->
         (0 until cols).map { col ->
             val position = Position(row, col)
-//            val bottomPosition = Position(rows - 1 - row - abs(rowsDiff), col)
-//            if (get(position) is Dot || get(bottomPosition) is Dot)
-            if (get(position) is Dot || bottomHalfReversed[position] is Dot)
+            val bottomPosition = Position(foldRowIdx * 2 - row, col)
+            if (get(position) is Dot || get(bottomPosition) is Dot)
                 Dot(position)
             else
                 Empty(position)
@@ -35,22 +25,11 @@ fun Paper.foldUp(foldRowIdx: Int): Paper {
 }
 
 fun Paper.foldLeft(foldColIdx: Int): Paper {
-    val colsDiff = foldColIdx - (cols - 1 - foldColIdx)
-    val rightHalfReversed = map { row ->
-        row.filterIndexed { colIdx, _ -> colIdx > foldColIdx }
-            .reversed()
-            .mapIndexed { colIdx, paperPosition ->
-                paperPosition.copy(Position(paperPosition.position.row, colIdx + colsDiff))
-            }
-    }.let(::Matrix)
-
-
     return (0 until rows).map { row ->
         (0 until foldColIdx).map { col ->
             val position = Position(row, col)
-//            val rightPosition = Position(row, cols - 1 - col - abs(colsDiff))
-//            if (get(position) is Dot || get(rightPosition) is Dot)
-            if (get(position) is Dot || rightHalfReversed[position] is Dot)
+            val rightPosition = Position(row, foldColIdx * 2 - col)
+            if (get(position) is Dot || get(rightPosition) is Dot)
                 Dot(position)
             else
                 Empty(position)
@@ -66,19 +45,14 @@ sealed class PaperPosition(open val position: Position)
 data class Dot(override val position: Position) : PaperPosition(position)
 data class Empty(override val position: Position) : PaperPosition(position)
 
-fun PaperPosition.copy(position: Position) = when (this) {
-    is Dot -> copy(position)
-    is Empty -> copy(position)
-}
-
 sealed class FoldInstruction(open val foldIdx: Int)
 data class FoldUp(override val foldIdx: Int) : FoldInstruction(foldIdx)
 data class FoldLeft(override val foldIdx: Int) : FoldInstruction(foldIdx)
 
 fun part1(input: File) = input.readLines()
     .let { lines ->
-        val initialPaper = getInitialPaper(lines)
-        val foldInstructions = getFoldInstructions(lines)
+        val initialPaper = parseInitialPaper(lines)
+        val foldInstructions = parseFoldInstructions(lines)
 
         foldInstructions.take(1).fold(initialPaper) { paper, instruction ->
             when (instruction) {
@@ -92,8 +66,8 @@ fun part1(input: File) = input.readLines()
 
 fun part2(input: File) = input.readLines()
     .let { lines ->
-        val initialPaper = getInitialPaper(lines)
-        val foldInstructions = getFoldInstructions(lines)
+        val initialPaper = parseInitialPaper(lines)
+        val foldInstructions = parseFoldInstructions(lines)
 
         foldInstructions.fold(initialPaper) { paper, instruction ->
             when (instruction) {
@@ -106,7 +80,7 @@ fun part2(input: File) = input.readLines()
     .sumOf { row -> row.count { it is Dot } }
     .also(::println)
 
-fun getInitialPaper(lines: List<String>): Paper = lines
+fun parseInitialPaper(lines: List<String>): Paper = lines
     .filterNot { it.isBlank() }
     .filterNot { it.startsWith("fold") }
     .map { it.split(",").map { it.toInt() } }
@@ -126,7 +100,7 @@ fun getInitialPaper(lines: List<String>): Paper = lines
     }
     .let(::Paper)
 
-fun getFoldInstructions(lines: List<String>) = lines
+fun parseFoldInstructions(lines: List<String>) = lines
     .filter { it.startsWith("fold") }
     .map { it.removePrefix("fold along ").split("=") }
     .map { (axis, idx) ->
